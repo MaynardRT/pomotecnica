@@ -32,8 +32,11 @@ const resetBtn = document.getElementById("reset-btn");
 const soundBtn = document.getElementById("sound-btn");
 const aboutToggle = document.getElementById("about-toggle");
 const popupContent = document.getElementById("popupContent");
+const popupClose = document.getElementById("popup-close");
+const modalBackdrop = document.getElementById("modal-backdrop");
 const timerEndSound = document.getElementById("timer-end-sound");
 const modeButtons = Array.from(document.querySelectorAll(".timer-option"));
+const body = document.body;
 
 function getModeDuration(mode) {
   return modes[mode].minutes * 60;
@@ -61,6 +64,15 @@ function updateModeButtons() {
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-selected", String(isActive));
   });
+}
+
+function updateTheme() {
+  body.classList.remove(
+    "theme-pomodoro",
+    "theme-short-break",
+    "theme-long-break",
+  );
+  body.classList.add(`theme-${currentMode}`);
 }
 
 function updateSessionLabel() {
@@ -91,6 +103,7 @@ function persistSettings() {
 }
 
 function render() {
+  updateTheme();
   updateModeButtons();
   updateSessionLabel();
   updateSoundButton();
@@ -253,15 +266,27 @@ function toggleSound() {
 }
 
 function togglePopup() {
-  const isOpen = popupContent.classList.toggle("show");
-  popupContent.setAttribute("aria-hidden", String(!isOpen));
-  aboutToggle.setAttribute("aria-expanded", String(isOpen));
+  if (popupContent.classList.contains("show")) {
+    closePopup();
+    return;
+  }
+
+  popupContent.classList.add("show");
+  popupContent.setAttribute("aria-hidden", "false");
+  aboutToggle.setAttribute("aria-expanded", "true");
+  modalBackdrop.hidden = false;
+  modalBackdrop.classList.add("is-visible");
+  document.body.classList.add("modal-open");
+  popupContent.focus();
 }
 
 function closePopup() {
   popupContent.classList.remove("show");
   popupContent.setAttribute("aria-hidden", "true");
   aboutToggle.setAttribute("aria-expanded", "false");
+  modalBackdrop.classList.remove("is-visible");
+  modalBackdrop.hidden = true;
+  document.body.classList.remove("modal-open");
 }
 
 function loadSettings() {
@@ -359,6 +384,8 @@ modeButtons.forEach((button) => {
 });
 
 aboutToggle.addEventListener("click", togglePopup);
+popupClose.addEventListener("click", closePopup);
+modalBackdrop.addEventListener("click", closePopup);
 
 document.addEventListener("click", (event) => {
   if (!popupContent.classList.contains("show")) {

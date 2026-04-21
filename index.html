@@ -19,132 +19,145 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico?v=2" />
   </head>
   <body>
-    <header class="main-header">
-      <a href="./index.html"
-        ><h1 class="logo">
-          <img
-            src="./Assets/images/Pomotecnica.png"
-            alt="pomotecnica-logo"
-          />Pomotecnica.io
-        </h1></a
-      >
-      <div class="popup">
-        <button
-          type="button"
-          class="nav-link active about-toggle"
-          id="about-toggle"
-          aria-expanded="false"
-          aria-controls="popupContent"
+    <div class="modal-backdrop" id="modal-backdrop" hidden></div>
+    <div class="app-shell">
+      <header class="main-header">
+        <a href="./index.html" class="brand-link"
+          ><h1 class="logo">
+            <img
+              src="./Assets/images/Pomotecnica.png"
+              alt="pomotecnica-logo"
+            />Pomotecnica.io
+          </h1></a
         >
-          About
-        </button>
-        <div
-          class="popuptext"
-          id="popupContent"
-          role="dialog"
-          aria-modal="false"
-          aria-labelledby="about-title"
-          aria-hidden="true"
-        >
-          <h1 id="about-title">What is Pomotecnica?</h1>
-          <p>
-            Pomotecnica is a customizable pomodoro timing tool compatible with
-            desktop and mobile browsers. It helps maintain focus on any project,
-            whether coding, writing, or studying.
-          </p>
-          <h1>How to use the Pomodoro Timer?</h1>
-          <ul>
-            <li>Think of the tasks you need to complete today.</li>
-            <li>Set estimated pomodoros—25 minutes for each task.</li>
-            <li>Start the timer and focus on the task for 25 minutes.</li>
-            <li>Take a 5-minute break when the alarm rings.</li>
-            <li>
-              Repeat 3–5 times, and take a long 15-minute break afterward.
-            </li>
-          </ul>
-          <h1>Pomodoro Technique</h1>
-          <p>
-            The Pomodoro Technique was developed by Francesco Cirillo to promote
-            productivity. It divides work into 25-minute intervals (pomodoros)
-            with short breaks in between, named after the tomato-shaped timer
-            Cirillo used as a student. — Wikipedia
-          </p>
+        <div class="popup">
+          <button
+            type="button"
+            class="nav-link active about-toggle"
+            id="about-toggle"
+            aria-expanded="false"
+            aria-controls="popupContent"
+          >
+            About
+          </button>
+          <div
+            class="popuptext"
+            id="popupContent"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="about-title"
+            aria-hidden="true"
+            tabindex="-1"
+          >
+            <div class="popup-header">
+              <h1 id="about-title">What is Pomotecnica?</h1>
+              <button
+                type="button"
+                class="popup-close"
+                id="popup-close"
+                aria-label="Close About dialog"
+              >
+                ×
+              </button>
+            </div>
+            <p>
+              Pomotecnica is a customizable pomodoro timing tool compatible with
+              desktop and mobile browsers. It helps maintain focus on any
+              project, whether coding, writing, or studying.
+            </p>
+            <h1>How to use the Pomodoro Timer?</h1>
+            <ul>
+              <li>Think of the tasks you need to complete today.</li>
+              <li>Set estimated pomodoros—25 minutes for each task.</li>
+              <li>Start the timer and focus on the task for 25 minutes.</li>
+              <li>Take a 5-minute break when the alarm rings.</li>
+              <li>
+                Repeat 3–5 times, and take a long 15-minute break afterward.
+              </li>
+            </ul>
+            <h1>Pomodoro Technique</h1>
+            <p>
+              The Pomodoro Technique was developed by Francesco Cirillo to
+              promote productivity. It divides work into 25-minute intervals
+              (pomodoros) with short breaks in between, named after the
+              tomato-shaped timer Cirillo used as a student. — Wikipedia
+            </p>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <div class="container">
-      <div class="vertical-lines">
-        <div class="line"></div>
-        <div class="line"></div>
-        <div class="line"></div>
-        <div class="line"></div>
-        <div class="line"></div>
-      </div>
-      <div class="timer-options" role="tablist" aria-label="Timer modes">
-        <button
-          type="button"
-          class="timer-option active"
-          id="pomodoro"
-          data-mode="pomodoro"
-          role="tab"
-          aria-selected="true"
-        >
-          Pomodoro
-        </button>
-        <button
-          type="button"
-          class="timer-option"
-          id="short-break"
-          data-mode="short-break"
-          role="tab"
-          aria-selected="false"
-        >
-          Short Break
-        </button>
-        <button
-          type="button"
-          class="timer-option"
-          id="long-break"
-          data-mode="long-break"
-          role="tab"
-          aria-selected="false"
-        >
-          Long Break
-        </button>
-      </div>
-      <p class="session-label" id="session-label">Focus session</p>
+      <main class="container">
+        <div class="vertical-lines" aria-hidden="true">
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+          <div class="line"></div>
+        </div>
+        <div class="timer-options" role="tablist" aria-label="Timer modes">
+          <button
+            type="button"
+            class="timer-option active"
+            id="pomodoro"
+            data-mode="pomodoro"
+            role="tab"
+            aria-selected="true"
+          >
+            Pomodoro
+          </button>
+          <button
+            type="button"
+            class="timer-option"
+            id="short-break"
+            data-mode="short-break"
+            role="tab"
+            aria-selected="false"
+          >
+            Short Break
+          </button>
+          <button
+            type="button"
+            class="timer-option"
+            id="long-break"
+            data-mode="long-break"
+            role="tab"
+            aria-selected="false"
+          >
+            Long Break
+          </button>
+        </div>
+        <p class="session-label" id="session-label">Focus session</p>
 
-      <div class="timer-display" id="timer" aria-live="polite">25:00</div>
-      <p class="status-message" id="status-message">Ready to focus.</p>
+        <div class="timer-display" id="timer" aria-live="polite">25:00</div>
+        <p class="status-message" id="status-message">Ready to focus.</p>
 
-      <!-- Sound notifications -->
-      <audio id="timer-end-sound" preload="auto">
-        <source src="./Assets/sounds/alarm.mp3" type="audio/mpeg" />
-      </audio>
+        <audio id="timer-end-sound" preload="auto">
+          <source src="./Assets/sounds/alarm.mp3" type="audio/mpeg" />
+        </audio>
 
-      <div class="controls">
-        <button class="start-btn" id="start-btn" type="button">START</button>
-        <button class="secondary-btn" id="reset-btn" type="button">
-          RESET
-        </button>
-        <button
-          class="secondary-btn"
-          id="sound-btn"
-          type="button"
-          aria-pressed="true"
-        >
-          SOUND ON
-        </button>
-      </div>
+        <div class="controls">
+          <button class="start-btn" id="start-btn" type="button">START</button>
+          <button class="secondary-btn" id="reset-btn" type="button">
+            RESET
+          </button>
+          <button
+            class="secondary-btn"
+            id="sound-btn"
+            type="button"
+            aria-pressed="true"
+          >
+            SOUND ON
+          </button>
+        </div>
+      </main>
+
+      <footer class="main-footer">
+        <div class="copyright">
+          Copyright © 2025 by
+          <a href="https://mrtwebsite-cc4d9.web.app/">MaynardRT</a>
+        </div>
+      </footer>
     </div>
-
-    <footer class="main-footer">
-      <div class="copyright">
-        Copyright © 2025 by
-        <a href="https://mrtwebsite-cc4d9.web.app/">MaynardRT</a>
-      </div>
-    </footer>
 
     <script src="./script.js" async defer></script>
   </body>
