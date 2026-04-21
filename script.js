@@ -1,210 +1,395 @@
-// Timer variables
-let timeLeft = 25 * 60; // 25 minutes in seconds
-let isRunning = false;
-let currentMode = 'pomodoro'; // pomodoro, short-break, long-break
-let soundEnabled = true;
+const STORAGE_KEY = "pomotecnicaSettings";
+const TICK_INTERVAL_MS = 250;
 
-// DOM elements
-const timerDisplay = document.getElementById('timer');
-const startBtn = document.getElementById('start-btn');
-const pomodoroBtn = document.getElementById('pomodoro');
-const shortBreakBtn = document.getElementById('short-break');
-const longBreakBtn = document.getElementById('long-break');
-const timerEndSound = document.getElementById('timer-end-sound');
-
-// Timer modes with their durations in minutes
 const modes = {
-    'pomodoro': 25,
-    'short-break': 5,
-    'long-break': 15
+  pomodoro: {
+    minutes: 25,
+    label: "Focus session",
+  },
+  "short-break": {
+    minutes: 5,
+    label: "Short break",
+  },
+  "long-break": {
+    minutes: 15,
+    label: "Long break",
+  },
 };
 
-// Initialize Web Worker for timer
-const timerWorker = new Worker(URL.createObjectURL(new Blob([`
-    let timer;
-    let timeLeft;
-    let lastTime;
+let timeLeft = modes.pomodoro.minutes * 60;
+let isRunning = false;
+let currentMode = "pomodoro";
+let soundEnabled = true;
+let completedPomodoros = 0;
+let timerIntervalId = null;
+let endTimestamp = null;
 
-    self.onmessage = function(e) {
-        if (e.data.command === 'start') {
-            timeLeft = e.data.timeLeft;
-            lastTime = Date.now();
-            
-            function tick() {
-                const now = Date.now();
-                const delta = now - lastTime;
-                
-                if (delta >= 1000) {
-                    timeLeft -= Math.floor(delta / 1000);
-                    lastTime = now - (delta % 1000);
-                    self.postMessage({ timeLeft });
-                    
-                    if (timeLeft <= 0) {
-                        self.postMessage({ finished: true });
-                        return;
-                    }
-                }
-                
-                timer = requestAnimationFrame(tick);
-            }
-            
-            tick();
-        } else if (e.data.command === 'pause') {
-            cancelAnimationFrame(timer);
-        } else if (e.data.command === 'set') {
-            timeLeft = e.data.timeLeft;
-        }
-    };
-`], { type: 'text/javascript' })));
+const timerDisplay = document.getElementById("timer");
+const sessionLabel = document.getElementById("session-label");
+const statusMessage = document.getElementById("status-message");
+const startBtn = document.getElementById("start-btn");
+const resetBtn = document.getElementById("reset-btn");
+const soundBtn = document.getElementById("sound-btn");
+const aboutToggle = document.getElementById("about-toggle");
+const popupContent = document.getElementById("popupContent");
+const timerEndSound = document.getElementById("timer-end-sound");
+const modeButtons = Array.from(document.querySelectorAll(".timer-option"));
 
-// Worker message handler
-timerWorker.onmessage = function(e) {
-    if (e.data.finished) {
-        timerFinished();
-    } else {
-        timeLeft = e.data.timeLeft;
-        updateDisplay();
-    }
-};
-
-// Format time as MM:SS
-function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+function getModeDuration(mode) {
+  return modes[mode].minutes * 60;
 }
 
-// Update the timer display
+function formatTime(totalSeconds) {
+  const seconds = Math.max(0, totalSeconds);
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+}
+
 function updateDisplay() {
-    timerDisplay.textContent = formatTime(timeLeft);
-    saveSettings();
+  timerDisplay.textContent = formatTime(timeLeft);
+  document.title = `${formatTime(timeLeft)} • ${modes[currentMode].label}`;
 }
 
-// Handle timer completion
-function timerFinished() {
-    isRunning = false;
-    startBtn.textContent = 'START';
-    
-    if (soundEnabled) {
-        timerEndSound.currentTime = 0;
-        timerEndSound.play().catch(e => console.log("Audio play failed:", e));
-    }
-    
-    // Auto-switch mode after completion
-    if (currentMode === 'pomodoro') {
-        // Implement your auto-switch logic here if desired
-    }
-    
-    saveSettings();
+function updateStatus(message) {
+  statusMessage.textContent = message;
 }
 
-// Start the timer
-function startTimer() {
-    if (isRunning) return;
-    
-    isRunning = true;
-    startBtn.textContent = 'PAUSE';
-    timerWorker.postMessage({ 
-        command: 'start', 
-        timeLeft: timeLeft 
-    });
+function updateModeButtons() {
+  modeButtons.forEach((button) => {
+    const isActive = button.dataset.mode === currentMode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
 }
 
-// Pause the timer
-function pauseTimer() {
-    isRunning = false;
-    startBtn.textContent = 'START';
-    timerWorker.postMessage({ command: 'pause' });
-    saveSettings();
+function updateSessionLabel() {
+  sessionLabel.textContent = modes[currentMode].label;
 }
 
-// Set the timer mode
-function setMode(mode) {
-    currentMode = mode;
-    timeLeft = modes[mode] * 60;
-    
-    // Update active button
-    document.querySelectorAll('.timer-option').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.getElementById(mode).classList.add('active');
-    
-    // Update worker with new time
-    if (isRunning) {
-        timerWorker.postMessage({ 
-            command: 'set', 
-            timeLeft: timeLeft 
-        });
-    }
-    
+function updateSoundButton() {
+  soundBtn.textContent = soundEnabled ? "SOUND ON" : "SOUND OFF";
+  soundBtn.setAttribute("aria-pressed", String(soundEnabled));
+}
+
+function updateStartButton() {
+  startBtn.textContent = isRunning ? "PAUSE" : "START";
+}
+
+function persistSettings() {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      currentMode,
+      timeLeft,
+      isRunning,
+      soundEnabled,
+      completedPomodoros,
+      endTimestamp,
+    }),
+  );
+}
+
+function render() {
+  updateModeButtons();
+  updateSessionLabel();
+  updateSoundButton();
+  updateStartButton();
+  updateDisplay();
+}
+
+function stopTicker() {
+  if (timerIntervalId !== null) {
+    window.clearInterval(timerIntervalId);
+    timerIntervalId = null;
+  }
+}
+
+function playCompletionSound() {
+  if (!soundEnabled) {
+    return;
+  }
+
+  timerEndSound.pause();
+  timerEndSound.currentTime = 0;
+  timerEndSound.play().catch(() => {
+    updateStatus(
+      "Timer ended. Tap anywhere and enable sound if your browser blocked playback.",
+    );
+  });
+}
+
+function getNextMode(mode) {
+  if (mode === "pomodoro") {
+    return completedPomodoros > 0 && completedPomodoros % 4 === 0
+      ? "long-break"
+      : "short-break";
+  }
+
+  return "pomodoro";
+}
+
+function finishTimer() {
+  stopTicker();
+  isRunning = false;
+  endTimestamp = null;
+  timeLeft = 0;
+
+  if (currentMode === "pomodoro") {
+    completedPomodoros += 1;
+  }
+
+  playCompletionSound();
+
+  const finishedMode = currentMode;
+  const nextMode = getNextMode(finishedMode);
+  const nextLabel = modes[nextMode].label.toLowerCase();
+
+  setMode(nextMode, {
+    preserveStatus: true,
+    resetTimer: true,
+  });
+
+  updateStatus(
+    `${modes[finishedMode].label} finished. ${nextLabel.charAt(0).toUpperCase()}${nextLabel.slice(1)} is ready.`,
+  );
+  persistSettings();
+}
+
+function syncRemainingTime() {
+  if (!isRunning || !endTimestamp) {
+    return;
+  }
+
+  const nextTimeLeft = Math.max(
+    0,
+    Math.ceil((endTimestamp - Date.now()) / 1000),
+  );
+
+  if (nextTimeLeft !== timeLeft) {
+    timeLeft = nextTimeLeft;
     updateDisplay();
-    saveSettings();
+    persistSettings();
+  }
+
+  if (nextTimeLeft <= 0) {
+    finishTimer();
+  }
 }
 
-// Save settings to localStorage
-function saveSettings() {
-    localStorage.setItem('pomotectnicaSettings', JSON.stringify({
-        soundEnabled,
-        currentMode,
-        timeLeft
-    }));
+function startTicker() {
+  stopTicker();
+  syncRemainingTime();
+  timerIntervalId = window.setInterval(syncRemainingTime, TICK_INTERVAL_MS);
 }
 
-// Load settings from localStorage
-function loadSettings() {
-    const settings = JSON.parse(localStorage.getItem('pomotectnicaSettings'));
-    if (settings) {
-        soundEnabled = settings.soundEnabled !== undefined ? settings.soundEnabled : true;
-        currentMode = settings.currentMode || 'pomodoro';
-        timeLeft = settings.timeLeft || modes[currentMode] * 60;
-        
-        // Update UI to reflect loaded settings
-        document.getElementById(currentMode).classList.add('active');
-    }
+function startTimer() {
+  if (isRunning || timeLeft <= 0) {
+    return;
+  }
+
+  isRunning = true;
+  endTimestamp = Date.now() + timeLeft * 1000;
+  updateStartButton();
+  updateStatus(`${modes[currentMode].label} in progress.`);
+  startTicker();
+  persistSettings();
 }
 
-// Debounce function for button clicks
-function debounce(func, timeout = 300) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => { func.apply(this, args); }, timeout);
-    };
+function pauseTimer() {
+  if (!isRunning) {
+    return;
+  }
+
+  syncRemainingTime();
+  isRunning = false;
+  endTimestamp = null;
+  stopTicker();
+  updateStartButton();
+  updateStatus(`${modes[currentMode].label} paused.`);
+  persistSettings();
 }
 
-// Register service worker for PWA
-function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').then(registration => {
-                console.log('ServiceWorker registration successful');
-            }).catch(err => {
-                console.log('ServiceWorker registration failed: ', err);
-            });
-        });
-    }
+function resetCurrentMode() {
+  stopTicker();
+  isRunning = false;
+  endTimestamp = null;
+  timeLeft = getModeDuration(currentMode);
+  render();
+  updateStatus(`${modes[currentMode].label} reset.`);
+  persistSettings();
 }
 
-// Event listeners with debounce
-startBtn.addEventListener('click', debounce(() => {
-    if (isRunning) {
-        pauseTimer();
-    } else {
-        startTimer();
-    }
-}));
+function setMode(mode, options = {}) {
+  const { preserveStatus = false, resetTimer = true } = options;
 
-pomodoroBtn.addEventListener('click', debounce(() => setMode('pomodoro')));
-shortBreakBtn.addEventListener('click', debounce(() => setMode('short-break')));
-longBreakBtn.addEventListener('click', debounce(() => setMode('long-break')));
+  stopTicker();
+  isRunning = false;
+  endTimestamp = null;
+  currentMode = mode;
 
-// For About Popup
+  if (resetTimer) {
+    timeLeft = getModeDuration(mode);
+  }
+
+  render();
+
+  if (!preserveStatus) {
+    updateStatus(`${modes[mode].label} ready.`);
+  }
+
+  persistSettings();
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  updateSoundButton();
+  updateStatus(
+    soundEnabled
+      ? "Sound notifications enabled."
+      : "Sound notifications muted.",
+  );
+  persistSettings();
+}
+
 function togglePopup() {
-    const popup = document.getElementById("popupContent");
-    popup.classList.toggle("show");
+  const isOpen = popupContent.classList.toggle("show");
+  popupContent.setAttribute("aria-hidden", String(!isOpen));
+  aboutToggle.setAttribute("aria-expanded", String(isOpen));
 }
 
-// Initialize
+function closePopup() {
+  popupContent.classList.remove("show");
+  popupContent.setAttribute("aria-hidden", "true");
+  aboutToggle.setAttribute("aria-expanded", "false");
+}
+
+function loadSettings() {
+  const rawSettings = localStorage.getItem(STORAGE_KEY);
+  if (!rawSettings) {
+    render();
+    updateStatus("Ready to focus.");
+    return;
+  }
+
+  try {
+    const settings = JSON.parse(rawSettings);
+    currentMode = modes[settings.currentMode]
+      ? settings.currentMode
+      : "pomodoro";
+    soundEnabled =
+      typeof settings.soundEnabled === "boolean" ? settings.soundEnabled : true;
+    completedPomodoros = Number.isInteger(settings.completedPomodoros)
+      ? settings.completedPomodoros
+      : 0;
+
+    const fallbackTime = getModeDuration(currentMode);
+    timeLeft =
+      Number.isFinite(settings.timeLeft) && settings.timeLeft > 0
+        ? settings.timeLeft
+        : fallbackTime;
+    isRunning = Boolean(settings.isRunning);
+    endTimestamp =
+      typeof settings.endTimestamp === "number" ? settings.endTimestamp : null;
+
+    if (isRunning && endTimestamp) {
+      const resumedTimeLeft = Math.max(
+        0,
+        Math.ceil((endTimestamp - Date.now()) / 1000),
+      );
+
+      if (resumedTimeLeft <= 0) {
+        isRunning = false;
+        endTimestamp = null;
+        timeLeft = fallbackTime;
+        updateStatus("Previous session expired while the page was closed.");
+      } else {
+        timeLeft = resumedTimeLeft;
+        updateStatus(`${modes[currentMode].label} resumed.`);
+        startTicker();
+      }
+    } else {
+      isRunning = false;
+      endTimestamp = null;
+      updateStatus(`${modes[currentMode].label} ready.`);
+    }
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+    currentMode = "pomodoro";
+    timeLeft = getModeDuration(currentMode);
+    isRunning = false;
+    soundEnabled = true;
+    completedPomodoros = 0;
+    endTimestamp = null;
+    updateStatus("Settings were reset after an invalid saved state.");
+  }
+
+  render();
+  persistSettings();
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {
+      updateStatus("Offline mode is unavailable in this browser session.");
+    });
+  });
+}
+
+startBtn.addEventListener("click", () => {
+  if (isRunning) {
+    pauseTimer();
+    return;
+  }
+
+  startTimer();
+});
+
+resetBtn.addEventListener("click", resetCurrentMode);
+soundBtn.addEventListener("click", toggleSound);
+
+modeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setMode(button.dataset.mode);
+  });
+});
+
+aboutToggle.addEventListener("click", togglePopup);
+
+document.addEventListener("click", (event) => {
+  if (!popupContent.classList.contains("show")) {
+    return;
+  }
+
+  if (!event.target.closest(".popup")) {
+    closePopup();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.code === "Space" && !event.target.closest("button")) {
+    event.preventDefault();
+    if (isRunning) {
+      pauseTimer();
+    } else {
+      startTimer();
+    }
+  }
+
+  if (event.key === "Escape") {
+    closePopup();
+  }
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && isRunning) {
+    syncRemainingTime();
+  }
+});
+
 loadSettings();
-updateDisplay();
 registerServiceWorker();
