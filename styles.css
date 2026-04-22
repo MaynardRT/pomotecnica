@@ -562,22 +562,25 @@ img {
 
 @media (min-width: 992px) {
   .app-shell {
-    width: min(100%, 60rem);
+    width: min(100%, 40rem);
   }
 
   .vertical-lines {
     display: flex;
     justify-content: center;
-    gap: 1.3rem;
-    width: min(24rem, 70%);
+    gap: 1.6rem;
+    /* span the full container width so rings are never clipped */
+    width: calc(100% + 2px);
+    left: -1px;
     position: absolute;
-    left: 50%;
     top: 0;
-    transform: translate(-50%, -52%);
-    height: 2.8rem;
-    align-items: flex-start;
+    /* sit half-above the container top edge */
+    transform: translateY(-55%);
+    height: 3.6rem;
+    align-items: flex-end;
     opacity: 1;
     pointer-events: none;
+    overflow: visible;
   }
 
   .vertical-lines::before {
@@ -585,24 +588,27 @@ img {
     position: absolute;
     left: 0;
     right: 0;
-    top: 0.35rem;
-    height: 0.9rem;
-    border-radius: 0.25rem;
+    bottom: 0;
+    height: 1.1rem;
+    border-radius: 0.3rem 0.3rem 0 0;
     background: var(--binder-strip);
-    box-shadow: inset 0 -0.06rem 0 rgba(0, 0, 0, 0.12);
+    box-shadow: inset 0 -0.06rem 0 rgba(0, 0, 0, 0.14);
   }
 
   .line {
-    width: 0.95rem;
-    height: 1.8rem;
+    width: 1.5rem;
+    height: 3rem;
     background-color: var(--binder-ring);
-    border-radius: 0.45rem;
-    box-shadow: 0 0.08rem 0 rgba(255, 255, 255, 0.2);
+    border-radius: 0.55rem 0.55rem 0.3rem 0.3rem;
+    box-shadow:
+      0 0.1rem 0.2rem rgba(0, 0, 0, 0.28),
+      inset 0 0.08rem 0 rgba(255, 255, 255, 0.18);
     z-index: 1;
+    flex-shrink: 0;
   }
 
   .container {
-    padding: 3rem 2.5rem 2rem;
+    padding: 3.25rem 2.5rem 2rem;
   }
 
   .timer-options {
@@ -669,11 +675,11 @@ img {
 
 @media (min-width: 1280px) {
   .app-shell {
-    width: min(100%, 64rem);
+    width: min(100%, 42rem);
   }
 
   .timer-display {
-    font-size: 7.25rem;
+    font-size: 7rem;
   }
 }
 
