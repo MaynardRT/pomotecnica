@@ -27,6 +27,8 @@
   --popup-top: #2d4733;
   --popup-bottom: #24392a;
   --decor-line: rgba(56, 88, 60, 0.42);
+  --binder-strip: #b7c7b0;
+  --binder-ring: #45474e;
 }
 
 body.theme-pomodoro {
@@ -54,6 +56,8 @@ body.theme-pomodoro {
   --popup-top: #2d4733;
   --popup-bottom: #24392a;
   --decor-line: rgba(56, 88, 60, 0.42);
+  --binder-strip: #b7c7b0;
+  --binder-ring: #45474e;
 }
 
 body.theme-short-break {
@@ -81,6 +85,8 @@ body.theme-short-break {
   --popup-top: #7f6217;
   --popup-bottom: #6a5314;
   --decor-line: rgba(145, 113, 24, 0.44);
+  --binder-strip: #d8d0ae;
+  --binder-ring: #5b5547;
 }
 
 body.theme-long-break {
@@ -108,6 +114,8 @@ body.theme-long-break {
   --popup-top: #24517d;
   --popup-bottom: #1d4367;
   --decor-line: rgba(37, 83, 126, 0.44);
+  --binder-strip: #b9cadc;
+  --binder-ring: #3f4f63;
 }
 
 * {
@@ -558,16 +566,35 @@ img {
 
   .vertical-lines {
     display: flex;
-    justify-content: space-between;
-    margin: -2.5rem 0 1rem;
-    opacity: 0.72;
+    justify-content: center;
+    gap: 1.3rem;
+    margin: -3.1rem auto 1rem;
+    width: min(24rem, 70%);
+    position: relative;
+    height: 2.8rem;
+    align-items: flex-start;
+    opacity: 1;
+  }
+
+  .vertical-lines::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0.35rem;
+    height: 0.9rem;
+    border-radius: 0.25rem;
+    background: var(--binder-strip);
+    box-shadow: inset 0 -0.06rem 0 rgba(0, 0, 0, 0.12);
   }
 
   .line {
-    width: 2.75rem;
-    height: 5.25rem;
-    background-color: var(--decor-line);
-    border-radius: 999px;
+    width: 0.95rem;
+    height: 1.8rem;
+    background-color: var(--binder-ring);
+    border-radius: 0.45rem;
+    box-shadow: 0 0.08rem 0 rgba(255, 255, 255, 0.2);
+    z-index: 1;
   }
 
   .container {
@@ -581,6 +608,45 @@ img {
 
   .timer-option {
     min-height: 3.2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 0.85rem 1rem;
+  }
+
+  .app-shell {
+    gap: 0.8rem;
+    min-height: calc(100dvh - 1.7rem);
+  }
+
+  .container {
+    padding: 1rem;
+    border-radius: 1.2rem;
+  }
+
+  .timer-options {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .controls {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .start-btn {
+    grid-column: auto;
+  }
+
+  .timer-display {
+    font-size: clamp(3rem, 18vw, 4.5rem);
+    letter-spacing: -0.04em;
+  }
+
+  .popup .popuptext {
+    max-height: min(84vh, 36rem);
   }
 }
 
