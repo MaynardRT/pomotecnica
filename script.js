@@ -359,9 +359,14 @@ function registerServiceWorker() {
   }
 
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {
-      updateStatus("Offline mode is unavailable in this browser session.");
-    });
+    navigator.serviceWorker
+      .register("./sw.js")
+      .then((registration) => {
+        registration.update();
+      })
+      .catch(() => {
+        updateStatus("Offline mode is unavailable in this browser session.");
+      });
   });
 }
 
