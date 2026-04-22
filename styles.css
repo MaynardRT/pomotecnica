@@ -196,6 +196,7 @@ body.modal-open {
   overflow: hidden;
   display: grid;
   align-content: center;
+  position: relative;
 }
 
 .vertical-lines {
@@ -568,12 +569,15 @@ img {
     display: flex;
     justify-content: center;
     gap: 1.3rem;
-    margin: -3.1rem auto 1rem;
     width: min(24rem, 70%);
-    position: relative;
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -52%);
     height: 2.8rem;
     align-items: flex-start;
     opacity: 1;
+    pointer-events: none;
   }
 
   .vertical-lines::before {
@@ -598,7 +602,7 @@ img {
   }
 
   .container {
-    padding: 2.5rem 2.5rem 2rem;
+    padding: 3rem 2.5rem 2rem;
   }
 
   .timer-options {
