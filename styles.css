@@ -411,7 +411,7 @@ img {
   visibility: hidden;
   width: min(38rem, calc(100vw - 2rem));
   max-width: 100%;
-  max-height: min(78vh, 36rem);
+  max-height: calc(100dvh - 2rem);
   overflow-y: auto;
   background: linear-gradient(
     180deg,
@@ -650,7 +650,20 @@ img {
   }
 
   .popup .popuptext {
-    max-height: min(84vh, 36rem);
+    /* Keep popup pinned within viewport on mobile */
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    transform: none;
+    border-radius: 1rem;
+  }
+
+  .popup .show {
+    transform: none;
   }
 }
 
